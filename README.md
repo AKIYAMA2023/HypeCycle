@@ -14,3 +14,7 @@ Figure S1
 Figure S2
 Figure S3
 Figure S4
+
+## Note
+As for survey data, we rely on the DESNZ public attifude tracker (https://www.gov.uk/government/collections/public-attitudes-tracking-survey) .
+Regarding approval or disapproval of fracking, since anonymized individual data were available up to Wave 37, we calculated approval or disapproval among those who responded that they were aware of fracking. Since individual-level data were not available for the later waves, we used the overall approval or disapproval of fracking, including those who responded other than those who were aware of it.
