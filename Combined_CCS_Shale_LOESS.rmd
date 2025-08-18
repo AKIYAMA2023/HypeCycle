@@ -1,0 +1,140 @@
+---
+output: reprex::reprex_document
+knit: reprex::reprex_render
+---
+
+# CCS_LOESS2とShale_LOESS2Yを統合した図の作成
+
+```{r}
+require(tidyverse)
+library(ggplot2)
+library(ggrepel)
+library(patchwork)  # プロットを組み合わせるため
+```
+
+## CCS データの準備とプロット作成
+
+```{r}
+# CCS データの準備
+awareness_rate <- c(41,40,38,41,40,41,41,46,65,62,63,67,69)
+support<- c(57,57,52,55,54,57,63,62,65,44,44,46,45)
+oppose<-c(7,8,6,8,7,6,6,6,7,7,9,9,10)
+sum_score <- support - oppose
+year<-c("2013","2014","2015","2016","2017","2018","2019","2020","2021","2022S","2022A","2023","2024")
+Method <- c(0,0,0,0,0,0,0,0,1,2,2,2,2)
+dataCCS <- data.frame(awareness_rate, support, oppose, sum_score, year, Method)
+
+# 年ごとの手動オフセット量
+nudges <- tibble(
+  year    = c("2013", "2014", "2015", "2016", "2017", "2018", "2019", "2020",  "2021", "2022S", "2022A", "2023", "2024"),
+  nudge_x = c( 1,  1, -0.5,   0.5,  0.5,   -0.5,   0,   -0.5,   0.0,    0,    0.0,   0.0,   0.0),
+  nudge_y = c( 0.5,  0,  0.5,  -0.5,   0.5,   0.5,   0.5,   0.5,   0,   0,   -0.5,   0.5,  -0.5)
+)
+
+df2 <- left_join(dataCCS, nudges, by = "year")
+
+# CCS LOESS プロット
+CCS_LOESS2 <- ggplot(df2, aes(awareness_rate, sum_score)) +
+  geom_point(aes(shape = factor(Method)),
+             size = 3, colour = "#1f9eb4", fill = "#1f9eb4", alpha = 0.4) +
+  geom_smooth(method = "loess", span = 0.7, se = FALSE,
+              colour ="#1f77b4", size = 0.8, alpha = 0.7) +
+  geom_text_repel(aes(label = year),
+                  nudge_x       = df2$nudge_x,
+                  nudge_y       = df2$nudge_y,
+                  size          = 3,
+                  box.padding   = 0.3,
+                  point.padding = 0.3,
+                  segment.color = "gray60",
+                  max.overlaps  = Inf) +
+  labs(title = "(a) Carbon Capture and Storage",
+       x     = "Awareness Rate (%)",
+       y     = "Net Support Rate (pp)") +
+  scale_x_continuous(expand = expansion(mult = .05)) +
+  scale_y_continuous(expand = expansion(mult = .05)) +
+  theme_bw(base_size = 14) +
+  theme(
+    plot.title      = element_text(size = 17, hjust = 0, face = "bold", 
+                                   margin = margin(b = 5.5, l = -20)),
+    axis.title      = element_text(size = 15),
+    axis.text       = element_text(size = 12),
+    legend.position = "none"
+  )
+```
+
+## Shale データの準備とプロット作成
+
+
+```{r}
+# Shale データの読み込み
+dataShale2 <- read_csv("Shale_data_for_LOESS_Un.csv")
+
+# 年データの追加
+dataShale2$year <- c(2013,2014,NA,NA,NA,2015,NA,NA,NA,2016,NA,NA,NA,2017,NA,NA,NA,2018,NA,NA,2019,NA,NA,NA,2020,NA,NA,NA,2021,NA,2022,2024)
+
+# Shale LOESS プロット
+Shale_LOESS2Y <- ggplot(dataShale2, aes(x = awareness_rate, y = Net_Support)) +
+  geom_point(
+    aes(shape = factor(Method)),
+    size  = 3,
+    colour = "#1f9eb4",
+    fill = "#1f9eb4",
+    alpha  = 0.4
+  ) +
+  geom_smooth(
+    method = "loess",
+    span   = 0.9,
+    se     = FALSE,
+    colour ="#1f77b4",
+    size   = 0.8,
+    alpha = 0.7
+  ) +
+  geom_text_repel(
+    aes(label = year),
+    size = 3.5,
+    show.legend = FALSE,
+    segment.color = "grey50",
+    segment.size = 0.2,
+    nudge_x = c(-0.2,0.5,0,0,0,-0.5,0,0,0,-0.5,0,0,0,0.5,0,0,0,-0.5,0,0,-0.5,0,0,0,-0.5,0,0,0,0.5,0,0.5,0.5),
+    nudge_y = c(-0.7,0.7,0,0,0,-0.7,0,0,0,-0.7,0,0,0,0.7,0,0,0,-0.7,0,0,-0.7,0,0,0,-0.7,0,0,0,-0.7,0,0.7,0.7)
+  ) +
+  labs(
+    title = "(b) Hydraulic Fracturing",
+    x     = "Awareness Rate (%)",
+    y     = "Net Support Rate (pp)"
+  ) +
+  scale_x_continuous(
+    breaks = seq( floor(min(dataShale2$awareness_rate)),
+                  ceiling(max(dataShale2$awareness_rate)), by = 4),
+    expand = expansion(mult = c(0.05, 0.05))
+  ) +
+  scale_y_continuous(
+    expand = expansion(mult = c(0.05, 0.05))
+  ) +
+  theme_bw(base_size = 14) +
+  theme(
+    plot.title         = element_text(size = 17, hjust = 0, face = "bold",
+                                     margin = margin(b = 5.5, l = -20)),
+    axis.title         = element_text(size = 15),
+    axis.text          = element_text(size = 12),
+    panel.background   = element_rect(fill = "white", colour = NA),
+    legend.position = "none"
+  )
+```
+
+## 統合プロットの作成
+
+```{r}
+# patchworkを使用して左右に並べる（間隔を調整）
+combined_plot <- CCS_LOESS2 + Shale_LOESS2Y + 
+  plot_layout(widths = c(1, 1), guides = "collect") & 
+  theme(plot.margin = margin(5.5, 11, 5.5, 5.5))
+# プロットを表示
+#combined_plot
+```
+
+```{r}
+# 高解像度で保存
+ggsave("Combined_CCS_Shale_LOESS.png", combined_plot, 
+       width = 11, height = 6, dpi = 600)
+```
