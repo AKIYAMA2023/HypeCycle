@@ -10,7 +10,7 @@ Figure 2 Reproducing Hype Cycle organized.py
 
 Figure 3 Combined awaness opinion tradeoff.py
 
-Figure 4 Cluster Organized.py
+Figure 4 Cluster Organized (a).py
 
 Figure 5 Different d and mu organized.py
 
