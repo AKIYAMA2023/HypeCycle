@@ -16,7 +16,7 @@ Figure 5: Cluster Organized.py
 
 Figure 6: Different d and mu organized 2.py
 
-Figure 7: Combined_CCS_Shale_LOESS.rmd
+Figure 7: Combined_CCS_Shale_LOESS_2.rmd
 
 Figure 8: Fracking Breakeven point.py
 
