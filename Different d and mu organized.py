@@ -174,14 +174,14 @@ def create_panel_figure(n_runs=5, base_ticks=600):
     
     # dの値に応じてticksを変更
     ticks_per_ct = {
-        0.25: 600,
-        0.50: 280,
-        0.75: 280,
-        1.00: 160
+        0.25: 450,
+        0.50: 450,
+        0.75: 450,
+        1.00: 450
     }
     
     # Create a square figure
-    fig = plt.figure(figsize=(15, 12))
+    fig = plt.figure(figsize=(16, 12))
     gs = GridSpec(3, 4, figure=fig)  
     
     # First pass: Run simulations and collect statistics
@@ -217,16 +217,11 @@ def create_panel_figure(n_runs=5, base_ticks=600):
             panel_max = np.max(mean + ci)
             panel_max_values[(i, j)] = panel_max
     
-    # Calculate row-wise maximum values for unified y-axis
-    row_max_values = {}
-    for i in range(len(learning_rates)):
-        row_max = max(panel_max_values[(i, j)] for j in range(len(confidence_thresholds)))
-        # Round up to next appropriate value
-        if row_max < 200:
-            row_max = np.ceil(row_max / 20) * 20
-        else:
-            row_max = np.ceil(row_max / 40) * 40
-        row_max_values[i] = row_max
+    # Set unified parameters for all panels
+    unified_x_max = 450  # x軸の最大値を450に設定
+    unified_x_tick_step = 150  # x軸の目盛り間隔（0, 150, 300, 450）
+    unified_y_max = 150  # y軸の最大値を150に固定
+    unified_y_tick_step = 50  # y軸の目盛り間隔（0, 50, 100, 150）
     
     print("Creating plots...")
     # Second pass: Create plots with row-unified y-limits
@@ -237,57 +232,42 @@ def create_panel_figure(n_runs=5, base_ticks=600):
             
             mean, ci, ticks = all_results[(i, j)]  # ticksも取得
             
-            # Use row-unified y-axis limit
-            y_max = row_max_values[i]
+            # Plot on current subplot - use unified x-axis range
+            t = np.arange(unified_x_max + 1)
+            # Extend or truncate data to match unified x-axis
+            if len(mean) < len(t):
+                # Extend with last value if data is shorter
+                extended_mean = np.concatenate([mean, np.full(len(t) - len(mean), mean[-1])])
+                extended_ci = np.concatenate([ci, np.full(len(t) - len(ci), ci[-1])])
+            else:
+                # Truncate if data is longer
+                extended_mean = mean[:len(t)]
+                extended_ci = ci[:len(t)]
             
-            # Plot on current subplot
-            t = np.arange(ticks + 1)
-            ax.plot(t, mean, color='blue', linewidth=1.5)
-            ax.fill_between(t, mean - ci, mean + ci, alpha=0.2, color='blue')
+            ax.plot(t, extended_mean, color='blue', linewidth=1.5)
+            ax.fill_between(t, extended_mean - extended_ci, extended_mean + extended_ci, alpha=0.1, color='blue')
             
             # Set subplot title and labels
             # Convert i,j coordinates to a letter: (0,0)=a, (0,1)=b, etc.
             label_idx = i * len(confidence_thresholds) + j
             label = chr(97 + label_idx)  # 97 is ASCII for 'a'
             
-            # タイトルにパネル番号を含める（Ticksの情報も追加）
+            # タイトルにパネル番号を含める
             ax.set_title(f'({label}) μ={lr}, d={ct}', fontsize=15, fontweight='bold', ha='left', x=0.0)
-            ax.set_xlim(0, ticks)
-            ax.set_ylim(0, y_max)
             
-            # Add tick marks - 各パネルのticksに合わせて調整
-            # dの値に応じてx軸の目盛りを設定（すべて四分割）
-            if ct == 1.00:  # d=1の場合、160まで、40ごと
-                tick_spacing = 40
-            elif ct in [0.50, 0.75]:  # d=0.5, 0.75の場合、280まで、70ごと
-                tick_spacing = 70
-            else:  # d=0.25の場合、600まで、150ごと
-                tick_spacing = 150
-            ax.set_xticks(np.arange(0, ticks+1, tick_spacing))
+            # Use unified axis limits and tick marks for all panels
+            ax.set_xlim(0, unified_x_max)
+            ax.set_ylim(0, unified_y_max)
+            ax.set_xticks(np.arange(0, unified_x_max+1, unified_x_tick_step))
+            ax.set_yticks(np.arange(0, unified_y_max+1, unified_y_tick_step))
             
-            # Set y ticks based on the row's unified y-max
-            # Use consistent tick spacing within each row
-            if y_max <= 80:
-                y_tick_step = 20
-            elif y_max <= 200:
-                y_tick_step = 40
-            else:
-                y_tick_step = 50
-            ax.set_yticks(np.arange(0, y_max+1, y_tick_step))
-            
-            # Only add x-label for bottom row
+            # Add x-label for bottom row
             if i == 2:
                 ax.set_xlabel('Time Step (t)', fontsize=14, fontweight='medium')
-            else:
-                # Remove x-tick labels for all rows except the bottom one
-                ax.set_xticklabels([])
             
-            # Only add y-label for leftmost column
+            # Add y-label for leftmost column
             if j == 0:
                 ax.set_ylabel('Sum of Expressed Opinions', fontsize=14, fontweight='medium')
-            else:
-                # Remove y-tick labels for all columns except the leftmost one
-                ax.set_yticklabels([])
                 
             # Add grid but make it lighter
             ax.grid(True, linestyle='-', linewidth=0.5, color='gray', alpha=0.2)
@@ -296,8 +276,8 @@ def create_panel_figure(n_runs=5, base_ticks=600):
             ax.tick_params(axis='both', which='major', labelsize=9)
     
     # Add parameter labels to the figure
-    fig.text(0.5, 0.01, 'Confidence Threshold Values (d)', ha='center', fontsize=18)
-    fig.text(0.01, 0.5, 'Learning Rate Values (μ)', va='center', rotation='vertical', fontsize=18)
+    fig.text(0.5, 0.01, 'Confidence Threshold Values (d)', ha='center', fontweight='bold', fontsize=18)
+    fig.text(0.01, 0.5, 'Learning Rate Values (μ)', va='center', rotation='vertical', fontweight='bold', fontsize=18)
     
     # 余白を増やして外側のラベルのためのスペースを確保
     plt.tight_layout(rect=[0.03, 0.03, 0.97, 0.96])

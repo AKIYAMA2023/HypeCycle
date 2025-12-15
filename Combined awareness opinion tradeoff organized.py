@@ -186,12 +186,12 @@ plt.rcParams.update({
     "axes.grid": True,
     "grid.alpha": 0.3,
     "grid.linewidth": 0.5,
-    "figure.figsize": (6, 6),
-    "axes.titlesize": 15,
-    "axes.labelsize": 12,
-    "xtick.labelsize": 10,
-    "ytick.labelsize": 10,
-    "legend.fontsize": 10,
+    "figure.figsize": (7, 6),
+    "axes.titlesize": 22,
+    "axes.labelsize": 18,
+    "xtick.labelsize": 16,
+    "ytick.labelsize": 16,
+    "legend.fontsize": 16,
     "axes.linewidth": 1.0,
     "figure.facecolor": "white",
     "axes.facecolor": "white",
@@ -264,21 +264,21 @@ def run_combined_simulations(n_runs: int = 100, ticks: int = 200,
     mean_awareness = np.mean(all_awareness_ratios, axis=0)
     mean_recent_init_opinion = np.mean(all_recent_mean_init_opinions, axis=0)    # Create combined figure with custom width ratios
     fig = plt.figure(figsize=(10, 6))
-    gs = gridspec.GridSpec(1, 2, width_ratios=[1.5, 1], figure=fig, wspace=0.25)
+    gs = gridspec.GridSpec(1, 2, width_ratios=[1.6, 1], figure=fig, wspace=0.3)
     ax1 = fig.add_subplot(gs[0])
     ax2 = fig.add_subplot(gs[1])
     
     # -------------------- Left plot: Opinion Group Awareness --------------------
     t = np.arange(ticks + 1)
     
-    ax1.plot(t, ext_adv_mean * 100, label="Potential Extreme Advocates", **STYLE["ext_adv"])
-    ax1.plot(t, med_adv_mean * 100, label="Potential Moderate Advocates", **STYLE["mod_adv"])
-    ax1.plot(t, neutral_mean * 100, label="Potential Neutral Agents", **STYLE["neutral"])
-    ax1.plot(t, mod_opp_mean * 100, label="Potential Moderate Opponents", **STYLE["mod_opp"])
-    ax1.plot(t, ext_opp_mean * 100, label="Potential Extreme Opponents", **STYLE["ext_opp"])
+    ax1.plot(t, ext_adv_mean * 100, label="Potential Extreme\nAdvocates", **STYLE["ext_adv"])
+    ax1.plot(t, med_adv_mean * 100, label="Potential Moderate\nAdvocates", **STYLE["mod_adv"])
+    ax1.plot(t, neutral_mean * 100, label="Potential Neutral\nAgents", **STYLE["neutral"])
+    ax1.plot(t, mod_opp_mean * 100, label="Potential Moderate\nOpponents", **STYLE["mod_opp"])
+    ax1.plot(t, ext_opp_mean * 100, label="Potential Extreme\nOpponents", **STYLE["ext_opp"])
 
-    ax1.set_xlabel("Time Step (t)", fontsize=12)
-    ax1.set_ylabel("Awareness Rate (%)", fontsize=12)
+    ax1.set_xlabel("Time Step (t)", fontsize=14)
+    ax1.set_ylabel("Awareness Rate (%)", fontsize=14)
     ax1.set_ylim(-2, 102)
     ax1.set_facecolor('white')
     ax1.grid(alpha=0.3, linewidth=0.5)
@@ -287,32 +287,32 @@ def run_combined_simulations(n_runs: int = 100, ticks: int = 200,
         spine.set_linewidth(1.0)
 
     legend1 = ax1.legend(loc="lower right", frameon=False, fancybox=False, shadow=False, 
-                        framealpha=0.95, edgecolor='none', fontsize=10)
+                        framealpha=0.95, edgecolor='none', fontsize=12)
     legend1.get_frame().set_facecolor('#FFFFFF')
     ax1.text(-0.17, 1.06, '(a)', transform=ax1.transAxes,
-             fontsize=17, fontweight='bold', va='top', ha='left')
+             fontsize=18, fontweight='bold', va='top', ha='left')
     ax1.set_xticks(np.arange(0, ticks+1, 50))
     ax1.set_yticks(np.arange(0, 101, 20))
     ax1.tick_params(axis='both', which='major', labelsize=10)
 
     # -------------------- Right plot: Awareness vs Recent Opinion --------------------    # 認知度をプロット (左軸)
     color1 = 'black'
-    ax2.set_ylabel('Awareness Rate (%)', fontsize=12)
-    ax2.set_xlabel('Time Step (t)', fontsize=12)
+    ax2.set_ylabel('Awareness Rate (%)', fontsize=14)
+    ax2.set_xlabel('Time Step (t)', fontsize=14)
     line2 = ax2.plot(t, mean_awareness * 100, color=color1, lw=2, label='Awareness', alpha=0.6)
     ax2.tick_params(axis='both', labelsize=10)
-    ax2.set_ylim(-55, 110)
+    ax2.set_ylim(-60, 110)
     ax2.set_yticks([0, 20, 40, 60, 80, 100])
 
     # 直近Aware初期意見をプロット (右軸)
     color2 = '#F5B700'
     ax2_twin = ax2.twinx()
-    ax2_twin.set_ylabel('Latent Opinions of Recently Aware Agents', fontsize=12)
+    ax2_twin.set_ylabel('Latent Opinions of Recently Aware Agents', fontsize=14)
     line1 = ax2_twin.plot(t, mean_recent_init_opinion, color=color2, linestyle='--', lw=2.5,
                     label='Opinion')
     ax2_twin.tick_params(axis='both', labelsize=10)
     ax2_twin.set_yticks([-0.4, -0.2, 0, 0.2, 0.4, 0.6, 0.8, 1.0])
-    ax2_twin.set_ylim(-0.55, 1.1)
+    ax2_twin.set_ylim(-0.6, 1.1)
     ax2_twin.axhline(0, ls="--", lw=1.5, color='darkgray')
     
     # 交差点を検出してグレーアウト
@@ -331,12 +331,12 @@ def run_combined_simulations(n_runs: int = 100, ticks: int = 200,
                 ax2.axvspan(start, end, alpha=0.15, color='gray')    # 凡例の結合
     lines = line2 + line1
     labels = [l.get_label() for l in lines]
-    ax2.legend(lines, labels, loc='lower right', frameon=False, fontsize=10)
+    ax2.legend(lines, labels, loc='lower right', frameon=False, fontsize=11)
     
     # グリッドと装飾
     ax2.grid(True, axis='y', linestyle='-', linewidth=0.5, color='gray', alpha=0.3)
-    ax2.text(-0.25, 1.06, '(b)', transform=ax2.transAxes,
-             fontsize=17, fontweight='bold', va='top', ha='left')
+    ax2.text(-0.27, 1.06, '(b)', transform=ax2.transAxes,
+             fontsize=18, fontweight='bold', va='top', ha='left')
     
     # 全体の調整
     plt.tight_layout()
