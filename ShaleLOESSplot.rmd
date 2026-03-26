@@ -1,0 +1,126 @@
+---
+output: reprex::reprex_document
+knit: reprex::reprex_render
+---
+---
+output: reprex::reprex_document
+knit: reprex::reprex_render
+---
+
+# CCS_LOESS2とShale_LOESS2Yを統合した図の作成
+
+```{r}
+require(tidyverse)
+library(ggplot2)
+library(ggrepel)
+library(patchwork)  # プロットを組み合わせるため
+```
+
+## Shale データの準備とプロット作成
+
+```{r}
+# Shale データの読み込み
+dataShale2 <- read_csv("Shale_data_for_LOESS_Un.csv")
+
+# 年データの追加
+dataShale2$year <- c(2013,2014,NA,NA,NA,2015,NA,NA,NA,2016,NA,NA,NA,2017,NA,NA,NA,2018,NA,NA,2019,NA,NA,NA,2020,NA,NA,NA,2021,NA,2022,2024)
+
+# 特定の年のみラベル表示
+dataShale2$year_label <- ifelse(dataShale2$year %in% c(2013, 2016, 2020, 2021, 2022), as.character(dataShale2$year), "")
+
+
+# Shale LOESS プロット
+Shale_LOESS2Y <- ggplot(dataShale2, aes(x = awareness_rate, y = Net_Support)) +
+  geom_point(
+    size  = 3,
+    alpha  = 0.6,
+    color = "#9FB1C5"
+  ) +
+  geom_smooth(
+    method = "loess",
+    span   = 0.9,
+    se     = FALSE,
+    colour ="#0B3C5D",
+    size   = 1,
+    alpha = 0.7
+  ) +
+  geom_text_repel(
+    aes(label = year_label),
+    size = 5,
+    show.legend = FALSE,
+    segment.color = "grey50",
+    segment.size = 0.5,
+    nudge_x = c(-0.5,0,0,0,0,0,0,0,0,-1.0,0,0,0,0,0,0,0,0,0,0,-0.5,0,0,0,-1.0,0,0,0,1.0,1.0,1.0,1.0),
+    #nudge_y = c(-0.7,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0.7,0,0,0,0,0,0,0,-1.0,0,0,0)
+  ) +
+  labs(
+    x     = "Awareness Rate (%)",
+    y     = "Net Support Rate (pp)"
+  ) +
+  scale_x_continuous(
+    breaks = seq( floor(min(dataShale2$awareness_rate)),
+                  ceiling(max(dataShale2$awareness_rate)), by = 4),
+    expand = expansion(mult = c(0.05, 0.05))
+  ) +
+  scale_y_continuous(
+    expand = expansion(mult = c(0.05, 0.05)),
+    breaks = scales::pretty_breaks(n = 4)
+  ) +
+  theme_bw(base_size = 16) +
+  theme(
+    plot.title         = element_text(size = 20, hjust = 0, face = "bold",
+                                     margin = margin(b = 5.5, l = -20)),
+    axis.title         = element_text(size = 20, face = "bold"),
+    axis.text          = element_text(size = 14),
+    panel.background   = element_rect(fill = "white", colour = NA),
+    legend.position = "none",
+    panel.grid.minor = element_blank(),
+    panel.grid.major = element_line(color = "grey90", size = 0.3)
+  )
+```
+
+```{r}
+Shale_LOESS2Y
+```
+
+## 統合プロットの作成
+
+
+```{r}
+# 高解像度で保存
+ggsave("Shale_LOESS_simplified.png", Shale_LOESS2Y, 
+       width = 7, height = 6, dpi = 600)
+```
+
+
+### Shaleデータの変曲点分析
+
+```{r}
+cat("\n=== Shale データの相関変曲点分析 ===\n")
+
+# セグメント回帰
+shale_lm <- lm(Net_Support ~ awareness_rate, data = dataShale2)
+shale_seg <- segmented(shale_lm, seg.Z = ~awareness_rate, npsi = 1)
+
+# 変曲点
+breakpoint_shale <- shale_seg$psi[2]
+cat("変曲点（認知度）:", round(breakpoint_shale, 1), "%\n")
+
+# 変曲点前後の相関係数
+before_shale <- dataShale2$awareness_rate <= breakpoint_shale
+cor_before_shale <- cor(dataShale2$awareness_rate[before_shale], dataShale2$Net_Support[before_shale])
+cor_after_shale <- cor(dataShale2$awareness_rate[!before_shale], dataShale2$Net_Support[!before_shale])
+
+cat("変曲点前の相関係数:", round(cor_before_shale, 3), "\n")
+cat("変曲点後の相関係数:", round(cor_after_shale, 3), "\n")
+cat("相関係数の変化:", round(cor_after_shale - cor_before_shale, 3), "\n")
+cat("全体の相関係数:", round(cor(dataShale2$awareness_rate, dataShale2$Net_Support), 3), "\n")
+
+# 年代別分析（年データがあるもののみ）
+before_years <- dataShale2$year[before_shale & !is.na(dataShale2$year)]
+after_years <- dataShale2$year[!before_shale & !is.na(dataShale2$year)]
+cat("\n変曲点前の年:", paste(before_years, collapse = ", "), "\n")
+cat("変曲点後の年:", paste(after_years, collapse = ", "), "\n")
+```
+
+
